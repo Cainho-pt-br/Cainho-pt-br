@@ -332,18 +332,19 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
       <div class="feat"><div class="fi2">🎯</div><div class="ft">Controle</div><div class="fd">Ajuste cada variável</div></div>
     </div>
     <div class="land-form" id="land-form">
-      <div class="fg"><label>Seu nome</label><input class="fi" id="l-name" placeholder="Ex: Caio" type="text"></div>
+      <div class="fg"><label>Seu nome</label><input class="fi" id="l-name" placeholder="Ex: Caio" type="text" oninput="autoSaveForm()"></div>
       <div class="fg-2">
         <div class="fg" style="margin-bottom:0"><label>Sexo</label><div class="gender-row"><button class="gbtn sel" data-v="M" onclick="selGender(this)">♂ Masc</button><button class="gbtn" data-v="F" onclick="selGender(this)">♀ Fem</button></div></div>
-        <div class="fg" style="margin-bottom:0"><label>Idade</label><input class="fi" id="l-age" type="number" min="14" max="80" placeholder="28"></div>
+        <div class="fg" style="margin-bottom:0"><label>Idade</label><input class="fi" id="l-age" type="number" min="14" max="80" placeholder="28" oninput="autoSaveForm()"></div>
       </div>
       <div class="fg-2" style="margin-top:11px">
-        <div class="fg" style="margin-bottom:0"><label>Peso (kg)</label><input class="fi" id="l-weight" type="number" min="30" max="250" step=".1" placeholder="80"></div>
-        <div class="fg" style="margin-bottom:0"><label>Altura (cm)</label><input class="fi" id="l-height" type="number" min="100" max="230" placeholder="175"></div>
+        <div class="fg" style="margin-bottom:0"><label>Peso (kg)</label><input class="fi" id="l-weight" type="number" min="30" max="250" step=".1" placeholder="80" oninput="autoSaveForm()"></div>
+        <div class="fg" style="margin-bottom:0"><label>Altura (cm)</label><input class="fi" id="l-height" type="number" min="100" max="230" placeholder="175" oninput="autoSaveForm()"></div>
       </div>
-      <div class="fg" style="margin-top:11px"><label>Nível de musculação</label><select class="fs" id="l-gym"><option value="iniciante">Iniciante (0–6 meses)</option><option value="basico">Básico (6–12 meses)</option><option value="intermediario" selected>Intermediário (1–3 anos)</option><option value="avancado">Avançado (3+ anos)</option></select></div>
-      <div class="fg"><label>Nível de corrida</label><select class="fs" id="l-run"><option value="iniciante">Iniciante (nunca corri)</option><option value="basico" selected>Básico (corro às vezes)</option><option value="intermediario">Intermediário (corro regularmente)</option><option value="avancado">Avançado (10km+ tranquilo)</option></select></div>
-      <div class="fg"><label>Objetivo principal</label><select class="fs" id="l-goal"><option value="saude">Saúde e condicionamento</option><option value="prova" selected>Preparação para prova</option><option value="emagrecimento">Emagrecimento</option><option value="performance">Performance geral</option></select></div>
+      <div class="fg" style="margin-top:11px"><label>Nível de musculação</label><select class="fs" id="l-gym" onchange="autoSaveForm()"><option value="iniciante">Iniciante (0–6 meses)</option><option value="basico">Básico (6–12 meses)</option><option value="intermediario" selected>Intermediário (1–3 anos)</option><option value="avancado">Avançado (3+ anos)</option></select></div>
+      <div class="fg"><label>Nível de corrida</label><select class="fs" id="l-run" onchange="autoSaveForm()"><option value="iniciante">Iniciante (nunca corri — mas quero começar)</option><option value="basico" selected>Básico (corro às vezes)</option><option value="intermediario">Intermediário (corro regularmente)</option><option value="avancado">Avançado (10km+ tranquilo)</option></select></div>
+      <div class="fg"><label>Objetivo principal</label><select class="fs" id="l-goal" onchange="autoSaveForm()"><option value="saude">Saúde e condicionamento</option><option value="prova" selected>Preparação para prova</option><option value="emagrecimento">Emagrecimento</option><option value="performance">Performance geral</option></select></div>
+      <div class="fg" id="fg-target" style="display:flex;flex-direction:column;gap:4px;"><label>Distância alvo na prova (km)</label><input class="fi" id="l-target" type="number" min="1" max="100" step=".5" placeholder="Ex: 10" oninput="autoSaveForm()"></div>
       <button class="start-btn" onclick="startApp()">GERAR MEU PLANO →</button>
     </div>
   </div>
@@ -357,6 +358,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
     <div class="week-grid" id="week-grid"></div>
     <div class="sh"><h2>📊 Volume Semanal</h2></div>
     <div class="week-grid" id="vol-grid" style="grid-template-columns:repeat(auto-fill,minmax(110px,1fr));margin-bottom:36px;"></div>
+    <div class="sh"><h2>🏃 Plano de Corrida</h2></div>
+    <div id="run-guide" style="margin-bottom:36px;"></div>
     <div class="sh"><h2>🏃 Guia de Ritmos</h2></div>
     <div class="pace-grid" style="margin-bottom:36px;">
       <div class="pace-card pc-grn"><div class="pace-lbl">Leve</div><div class="pace-val">6:30–8:00</div><div class="pace-desc">min/km · 60–70% FC Máx<br>Conversa fácil.</div></div>
@@ -402,13 +405,33 @@ const APP_VERSION = 2;
 //  TRAINING SLOTS — reassignable to any day
 // ════════════════════════════════════════════
 const SLOTS = {
-  A:{name:'Peito + Tríceps + Corrida', icon:'💪🏃', color:'green', gym:['peito','triceps'], sets:[8,10], run:true},
+  // Multi-muscle combos
+  A:{name:'Peito + Tríceps + Corrida', icon:'💪🏃', color:'green', gym:['peito','triceps'], sets:[8,10], run:true, runType:'leve'},
   B:{name:'Costas + Bíceps', icon:'💪', color:'yellow', gym:['costas','biceps'], sets:[8,10]},
-  C:{name:'Ombro + Abdômen + Corrida', icon:'💪🏃', color:'blue', gym:['ombro','abdomen'], sets:[12,4], run:true},
+  C:{name:'Ombro + Abdômen + Corrida', icon:'💪🏃', color:'blue', gym:['ombro','abdomen'], sets:[12,4], run:true, runType:'moderado'},
   D:{name:'Pernas + Estabilização', icon:'🦵', color:'red', gym:['pernas','estabilizacao'], sets:[16,4]},
   E:{name:'Peito + Costas + Abdômen', icon:'💪', color:'purple', gym:['peito','costas','abdomen'], sets:[8,8,8]},
-  F:{name:'Corrida Longa', icon:'🏃', color:'brown', run:true, calc:true},
+  F:{name:'Corrida Longa', icon:'🏃', color:'brown', run:true, runType:'longao', calc:true},
   R:{name:'Descanso', icon:'😴', color:'white', rest:true},
+  // Foco num só grupo muscular
+  G:{name:'Peito (Foco)', icon:'💪', color:'green', gym:['peito'], sets:[16]},
+  H:{name:'Costas (Foco)', icon:'💪', color:'yellow', gym:['costas'], sets:[16]},
+  I:{name:'Pernas (Foco)', icon:'🦵', color:'red', gym:['pernas'], sets:[20]},
+  J:{name:'Ombro + Bíceps', icon:'💪', color:'blue', gym:['ombro','biceps'], sets:[12,10]},
+  K:{name:'Tríceps + Bíceps', icon:'💪', color:'purple', gym:['triceps','biceps'], sets:[12,10]},
+  // Tipos de corrida específicos
+  L:{name:'Corrida Leve', icon:'🏃', color:'green', run:true, runType:'leve'},
+  M:{name:'Corrida: Tiros', icon:'⚡🏃', color:'red', run:true, runType:'tiro'},
+  N:{name:'Corrida Moderada', icon:'🏃', color:'yellow', run:true, runType:'moderado'},
+};
+
+// Templates de divisão de treino
+const TEMPLATES = {
+  abcde:{name:'ABCDE',icon:'💪',desc:'5 treinos distintos por semana',sched:{0:'R',1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'},gymFor:['intermediario','avancado']},
+  abc:  {name:'ABC',  icon:'🔄',desc:'3 grupos alternados + corrida',sched:{0:'R',1:'G',2:'H',3:'L',4:'I',5:'L',6:'F'},gymFor:['basico','intermediario']},
+  ppl:  {name:'PPL',  icon:'⚡',desc:'Push · Pull · Legs',sched:{0:'R',1:'A',2:'B',3:'D',4:'L',5:'C',6:'F'},gymFor:['intermediario','avancado']},
+  run:  {name:'Corrida+',icon:'🏃',desc:'Foco em corrida (4x/sem)',sched:{0:'R',1:'L',2:'B',3:'M',4:'N',5:'D',6:'F'},runFor:['prova','performance']},
+  init: {name:'Iniciante',icon:'🌱',desc:'3 treinos suaves + corridas',sched:{0:'R',1:'G',2:'R',3:'L',4:'H',5:'R',6:'F'},gymFor:['iniciante']},
 };
 const DAY_NAMES = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 const DEFAULT_SCHEDULE = {0:'R',1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
@@ -435,16 +458,64 @@ const EX = {
 const VOL_R = {peito:{mev:8,mav:16,mrv:22},costas:{mev:8,mav:16,mrv:25},biceps:{mev:6,mav:10,mrv:20},triceps:{mev:4,mav:10,mrv:18},ombro:{mev:6,mav:12,mrv:22},abdomen:{mev:4,mav:12,mrv:20},pernas:{mev:8,mav:18,mrv:22}};
 const MN = {peito:'Peito',costas:'Costas',biceps:'Bíceps',triceps:'Tríceps',ombro:'Ombro',abdomen:'Abdômen',pernas:'Pernas',estabilizacao:'Estabilização'};
 
-// Running distances scale with cycle number
-function getWeekRuns(){
-  const c = Math.max(0,(S.cycle||1)-1);
-  const bump = c * 0.5; // +0.5km per cycle
-  return {
-    1:{1:{dist:`${(1.5+bump).toFixed(1)}–${(2+bump).toFixed(1)} km`,dot:'grn',int:'Leve'},3:{dist:`${(2.5+bump).toFixed(1)}–${(3.2+bump).toFixed(1)} km`,dot:'ylw',int:'Moderada'},6:{dist:`${(3+bump).toFixed(1)}–${(3.5+bump).toFixed(1)} km`,dot:'orn',int:'Mod/Alta'}},
-    2:{1:{dist:`${(2+bump).toFixed(1)}–${(2.5+bump).toFixed(1)} km`,dot:'grn',int:'Leve'},3:{dist:`${(3+bump).toFixed(1)}–${(3.5+bump).toFixed(1)} km`,dot:'ylw',int:'Moderada'},6:{dist:`${(3.5+bump).toFixed(1)}–${(4.2+bump).toFixed(1)} km`,dot:'orn',int:'Mod/Alta'}},
-    3:{1:{dist:`${(1.5+bump).toFixed(1)}–${(2+bump).toFixed(1)} km`,dot:'grn',int:'Leve'},3:{dist:`${(2+bump).toFixed(1)}–${(2.5+bump).toFixed(1)} km`,dot:'grn',int:'Leve'},6:{dist:'PROVA',dot:'target',int:''}},
+// ── Plano de corrida baseado no perfil ──────────────────────────
+function getRunPlanDefaults(){
+  const d={
+    iniciante:    {leve:2,  moderado:2,  longao:4,  tiroReps:3, tiroFast:1, tiroEasy:2},
+    basico:       {leve:3,  moderado:3,  longao:5,  tiroReps:4, tiroFast:1, tiroEasy:2},
+    intermediario:{leve:5,  moderado:5,  longao:8,  tiroReps:5, tiroFast:2, tiroEasy:2},
+    avancado:     {leve:7,  moderado:7,  longao:12, tiroReps:6, tiroFast:3, tiroEasy:2},
   };
+  return d[S.runLevel]||d.basico;
 }
+
+function getRunInfo(runType, week){
+  if(!S.runPlan) S.runPlan = getRunPlanDefaults();
+  const plan = S.runPlan;
+  const c = Math.max(0,(S.cycle||1)-1);
+  const bump = c * 0.5;
+  const wMult = week===1?1.0 : week===2?1.15 : (S.goal==='prova'?0.85:1.3);
+  if(runType==='tiro'){
+    const reps = (plan.tiroReps||4)+(week===2?1:0);
+    return {tiro:true, reps, fast:plan.tiroFast||1, easy:plan.tiroEasy||2, dot:'red', int:'Tiro'};
+  }
+  if(runType==='longao' && S.goal==='prova' && week===3){
+    return {prova:true, dot:'target', int:'PROVA'};
+  }
+  const bases={leve:plan.leve, moderado:plan.moderado, longao:plan.longao};
+  const base=bases[runType]||plan.leve||3;
+  const km=((base+bump)*wMult).toFixed(1);
+  const dots={leve:'grn',moderado:'ylw',longao:'brn'};
+  const ints={leve:'Leve',moderado:'Moderado',longao:'Longão'};
+  return {dist:`${km} km`, dot:dots[runType]||'grn', int:ints[runType]||'Leve'};
+}
+
+// Volumes iniciais por nível de musculação
+function getInitialVolumes(){
+  const factor={iniciante:0,basico:0.4,intermediario:1,avancado:1.4}[S.gymLevel]||1;
+  const vols={};
+  Object.keys(VOL_R).forEach(m=>{
+    const r=VOL_R[m];
+    let v;
+    if(factor<=0.4) v=r.mev;
+    else if(factor<=1) v=Math.round(r.mev+(r.mav-r.mev)*((factor-0.4)/0.6));
+    else v=Math.min(r.mrv, Math.round(r.mav+(r.mrv-r.mav)*((factor-1)/0.4)));
+    vols[m]=Math.round(v/2)*2;
+  });
+  return vols;
+}
+
+// Sugere template com base no perfil
+function suggestTemplate(){
+  if(S.goal==='prova'||S.runLevel==='avancado') return 'run';
+  if(S.gymLevel==='iniciante') return 'init';
+  if(S.gymLevel==='basico') return 'abc';
+  if(S.gymLevel==='avancado') return 'abcde';
+  return 'ppl';
+}
+
+// Mantém compatibilidade legada (slots A/C/F antigos)
+function getWeekRuns(){return {};}
 const WEEK_META = {1:{label:'Semana 1',sub:'Adaptação'},2:{label:'Semana 2',sub:'Evolução'},3:{label:'Semana 3',sub:'Pré-prova'}};
 const EXTRA_MODS = {
   bike:{name:'Bicicleta',icon:'🚴',tag:'tag-bike',desc:'30–45 min, ritmo moderado. Cardio sem impacto.'},
@@ -476,7 +547,7 @@ const ACHIEVEMENTS=[
 // ════════════════════════════════════════════
 let S = {
   v: APP_VERSION, name:'', gender:'M', age:28, weight:80, height:175,
-  gymLevel:'intermediario', runLevel:'basico', goal:'prova',
+  gymLevel:'intermediario', runLevel:'basico', goal:'prova', targetDist:10,
   currentWeek:1, cycle:1,
   weekCompleted:{1:[],2:[],3:[]},
   daySchedule:{...DEFAULT_SCHEDULE},
@@ -486,6 +557,8 @@ let S = {
   xp:0, totalTrainings:0, weeksCompleted:0, cycleStreak:0,
   history:[], achievements:[], modalitiesDone:0,
   needsCheckup:false,
+  runPlan:null,
+  awardedTrainings:{},
 };
 
 function save(){localStorage.setItem('cm_state',JSON.stringify(S));}
@@ -493,7 +566,6 @@ function load(){
   const d=localStorage.getItem('cm_state');
   if(d){
     const p=JSON.parse(d);
-    // Force reset if old version or missing version
     if(!p.v || p.v < APP_VERSION){
       localStorage.removeItem('cm_state');
       return;
@@ -505,6 +577,10 @@ function load(){
   if(!S.extraMods) S.extraMods={bike:[],pilates:[],walk:[]};
   if(!S.history) S.history=[];
   if(!S.achievements) S.achievements=[];
+  if(!S.runPlan) S.runPlan=null; // será inicializado em getRunInfo
+  if(!S.awardedTrainings) S.awardedTrainings={};
+  if(!S.targetDist) S.targetDist=10;
+  if(S.volumes && S.volumes.estabilizacao!==undefined) delete S.volumes.estabilizacao;
 }
 
 function getWeekDone(){return S.weekCompleted[S.currentWeek]||[];}
@@ -551,19 +627,18 @@ function triggerCheckup(){
     return s+(S.weekCompleted[w]||[]).filter(d=>{const def=dd.find(x=>x.id===d);return def&&def.run;}).length;
   },0);
 
-  // XP
-  let xpEarned=totalDone*XP_PER_TRAINING;
+  // XP de bônus (por treino já foi dado em toggleDone)
+  let xpEarned=0;
   if(totalDone>=15) xpEarned+=XP_WEEK_BONUS*2;
   else if(totalDone>=10) xpEarned+=XP_WEEK_BONUS;
   S.cycleStreak=(S.cycleStreak||0)+1;
   xpEarned+=S.cycleStreak*XP_STREAK_BONUS;
-  S.totalTrainings=(S.totalTrainings||0)+totalDone;
   if(totalDone>=15) S.weeksCompleted=(S.weeksCompleted||0)+1;
   let modsUsed=new Set();
   if(S.showRun)modsUsed.add('run');if(S.showGym)modsUsed.add('gym');
   Object.keys(S.extraMods).forEach(m=>{if(S.extraMods[m].length>0)modsUsed.add(m);});
   S.modalitiesDone=Math.max(S.modalitiesDone||0,modsUsed.size);
-  S.xp=(S.xp||0)+xpEarned;
+  if(xpEarned>0) S.xp=(S.xp||0)+xpEarned;
   S.history.push({cycle:S.cycle,xpEarned,date:new Date().toISOString(),totalDone,pct});
   checkAchievements();
 
@@ -641,10 +716,17 @@ function checkupVolAdj(delta){
 function startNextCycle(){
   if(checkupSched) S.daySchedule=checkupSched;
   checkupSched=null;
-  S.cycle=(S.cycle||1)+1;
+  const oldCycle=S.cycle||1;
+  S.cycle=oldCycle+1;
   S.currentWeek=1;
   S.weekCompleted={1:[],2:[],3:[]};
   S.needsCheckup=false;
+  // Limpa awarded do ciclo anterior para não acumular memória
+  Object.keys(S.awardedTrainings||{}).forEach(k=>{
+    if(k.startsWith(oldCycle+'_')) delete S.awardedTrainings[k];
+  });
+  // Atualiza run plan com novo ciclo (ciclo já foi incrementado)
+  if(!S.runPlan) S.runPlan=getRunPlanDefaults();
   save();
   document.getElementById('checkup-modal').classList.remove('show');
   buildApp();
@@ -653,33 +735,59 @@ function startNextCycle(){
 }
 
 function manualSaveProgress(){
-  if(isCycleComplete()){
-    triggerCheckup();
-  } else {
-    // Partial save
-    const totalDone=[1,2,3].reduce((s,w)=>(S.weekCompleted[w]||[]).length+s,0);
-    let xp=totalDone*XP_PER_TRAINING;
-    S.totalTrainings=(S.totalTrainings||0)+totalDone;
-    S.xp=(S.xp||0)+xp;
-    S.history.push({cycle:S.cycle,xpEarned:xp,date:new Date().toISOString(),totalDone,pct:Math.round((totalDone/18)*100)});
-    S.weekCompleted={1:[],2:[],3:[]};
-    checkAchievements();
-    save();
-    showToast('💾','Progresso salvo!',`+${xp} XP`);
-    renderProgress();
-  }
+  // XP por treino já é creditado automaticamente em toggleDone
+  if(isCycleComplete()) triggerCheckup();
+  else showToast('💾','Progresso salvo!','XP já creditado por treino');
 }
 
 // ════════════════════════════════════════════
 //  LANDING & NAV
 // ════════════════════════════════════════════
 let selGenderVal='M';
-function selGender(btn){document.querySelectorAll('.gbtn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');selGenderVal=btn.dataset.v;}
+function selGender(btn){document.querySelectorAll('.gbtn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');selGenderVal=btn.dataset.v;autoSaveForm();}
+
+function autoSaveForm(){
+  S.name=document.getElementById('l-name').value.trim();
+  S.gender=selGenderVal;
+  S.age=parseInt(document.getElementById('l-age').value)||S.age;
+  S.weight=parseFloat(document.getElementById('l-weight').value)||S.weight;
+  S.height=parseInt(document.getElementById('l-height').value)||S.height;
+  S.gymLevel=document.getElementById('l-gym').value;
+  S.runLevel=document.getElementById('l-run').value;
+  S.goal=document.getElementById('l-goal').value;
+  const td=document.getElementById('l-target');if(td)S.targetDist=parseFloat(td.value)||10;
+  const tg=document.getElementById('fg-target');
+  if(tg)tg.style.display=S.goal==='prova'?'flex':'none';
+  save();
+}
+
+function preFillLanding(){
+  const n=document.getElementById('l-name');if(n&&S.name)n.value=S.name;
+  const a=document.getElementById('l-age');if(a&&S.age!==28)a.value=S.age;
+  const w=document.getElementById('l-weight');if(w&&S.weight!==80)w.value=S.weight;
+  const h=document.getElementById('l-height');if(h&&S.height!==175)h.value=S.height;
+  const g=document.getElementById('l-gym');if(g)g.value=S.gymLevel;
+  const r=document.getElementById('l-run');if(r)r.value=S.runLevel;
+  const go=document.getElementById('l-goal');if(go)go.value=S.goal;
+  const td=document.getElementById('l-target');if(td)td.value=S.targetDist||10;
+  const tg=document.getElementById('fg-target');if(tg)tg.style.display=S.goal==='prova'?'flex':'none';
+  document.querySelectorAll('.gbtn').forEach(b=>b.classList.toggle('sel',b.dataset.v===S.gender));
+  selGenderVal=S.gender;
+}
+
 function startApp(){
   S.name=document.getElementById('l-name').value.trim()||'Atleta';
   S.gender=selGenderVal;S.age=parseInt(document.getElementById('l-age').value)||28;
   S.weight=parseFloat(document.getElementById('l-weight').value)||80;S.height=parseInt(document.getElementById('l-height').value)||175;
   S.gymLevel=document.getElementById('l-gym').value;S.runLevel=document.getElementById('l-run').value;S.goal=document.getElementById('l-goal').value;
+  const td=document.getElementById('l-target');if(td)S.targetDist=parseFloat(td.value)||10;
+  // Init volumes por nível
+  S.volumes=getInitialVolumes();
+  // Init run plan por nível
+  S.runPlan=getRunPlanDefaults();
+  // Sugere template
+  const tpl=TEMPLATES[suggestTemplate()];
+  if(tpl){S.daySchedule={...tpl.sched};}
   S.v=APP_VERSION;save();
   document.getElementById('landing').style.display='none';document.getElementById('app').style.display='block';document.getElementById('ftimer').style.display='flex';
   buildApp();nav('hoje',document.querySelector('.bnav-btn'));
@@ -697,11 +805,45 @@ function nav(view,btn){
 //  BUILD APP
 // ════════════════════════════════════════════
 function buildApp(){
-  renderWeekSelector();renderTodayView();renderWeekGrid();renderVolGrid();
-  // Check if cycle is complete and needs checkup
+  renderWeekSelector();renderTodayView();renderWeekGrid();renderVolGrid();renderRunGuide();
   if(isCycleComplete()&&!document.getElementById('checkup-modal').classList.contains('show')){
     setTimeout(()=>triggerCheckup(),500);
   }
+}
+
+function renderRunGuide(){
+  const el=document.getElementById('run-guide');if(!el)return;
+  if(!S.showRun){el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:8px;">Corrida desativada nos ajustes.</div>';return;}
+  const wk=S.currentWeek;
+  const types=['leve','tiro','moderado','longao'];
+  const icons={leve:'🟢',tiro:'🔴',moderado:'🟡',longao:'🟤'};
+  const labels={leve:'Leve',tiro:'Tiro',moderado:'Moderado',longao:'Longão'};
+  const tips={leve:'Ritmo de conversa',tiro:'Máxima intensidade',moderado:'Respiração intensa',longao:'Confortável SEMPRE'};
+
+  const cards=types.map(t=>{
+    const ri=getRunInfo(t,wk);
+    let distTxt='';
+    if(ri.prova) distTxt=`🎯 ${S.targetDist||10} km PROVA`;
+    else if(ri.tiro) distTxt=`${ri.reps}x (${ri.fast}min rápido + ${ri.easy}min leve)`;
+    else distTxt=ri.dist;
+    return `<div style="background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:14px 12px;">
+      <div style="font-size:18px;margin-bottom:6px;">${icons[t]}</div>
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">${labels[t]}</div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:20px;color:var(--t1);line-height:1.1;margin-bottom:4px;">${distTxt}</div>
+      <div style="font-size:10px;color:var(--t3);">${tips[t]}</div>
+    </div>`;
+  }).join('');
+
+  const bump=Math.max(0,(S.cycle||1)-1)*0.5;
+  const bumpTxt=bump>0?`<div style="font-size:11px;color:var(--acc);margin-bottom:8px;">+${bump.toFixed(1)} km por ciclo de progressão aplicado</div>`:'';
+
+  el.innerHTML=`${bumpTxt}<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:12px;">${cards}</div>
+  <div style="padding:10px 14px;background:rgba(77,159,255,.05);border:1px solid rgba(77,159,255,.15);border-radius:8px;font-size:11px;color:var(--t3);line-height:1.7;">
+    ✔ Longão = ritmo confortável <strong>SEMPRE</strong><br>
+    ✔ Não corra rápido todo dia (erro clássico)<br>
+    ✔ Se sentir dor → reduza, não ignore<br>
+    ✔ Fortalecimento 2x/sem ajuda muito (glúteo + perna)
+  </div>`;
 }
 
 function renderWeekSelector(){
@@ -710,7 +852,7 @@ function renderWeekSelector(){
       <span class="n">S${k}</span><span class="s">${v.sub}</span>
     </button>`).join('');
 }
-function setWeek(w){S.currentWeek=w;save();renderWeekSelector();renderTodayView();renderWeekGrid();}
+function setWeek(w){S.currentWeek=w;save();renderWeekSelector();renderTodayView();renderWeekGrid();renderRunGuide();}
 
 function renderTodayView(){
   const tod=new Date(),dayIdx=tod.getDay();
@@ -727,7 +869,13 @@ function renderTodayView(){
   const wrap=document.getElementById('today-card-wrap');
   const dd=getDaysDef();
   const dayDef=dd.find(d=>d.id===dayIdx)||dd[0];
-  wrap.innerHTML=buildCard(dayDef,true,true);attachCardListeners(wrap);
+  const todayDone=done.includes(dayIdx);
+  const saveBar=todayDone?`<div style="margin-top:12px;background:linear-gradient(135deg,rgba(61,220,132,.12),rgba(61,220,132,.06));border:1px solid rgba(61,220,132,.3);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;">
+    <span style="font-size:24px;">✅</span>
+    <div style="flex:1"><div style="font-family:'Bebas Neue',cursive;font-size:18px;color:var(--acc);">TREINO SALVO!</div>
+    <div style="font-size:12px;color:var(--t2);">XP creditado · ${S.xp} XP total · Lv.${getLevel().idx+1}</div></div>
+    <div style="font-family:'Bebas Neue',cursive;font-size:22px;color:var(--ylw);">+${XP_PER_TRAINING}</div></div>`:'';
+  wrap.innerHTML=buildCard(dayDef,true,true)+saveBar;attachCardListeners(wrap);
 }
 
 function renderWeekGrid(){
@@ -763,19 +911,18 @@ function buildCard(day,isToday,big){
       inner+=`<div style="margin-top:8px;padding:8px 12px;background:var(--s2);border-radius:8px;font-size:11px;color:var(--t3);line-height:1.5;">Descanso ativo — sem musculação/corrida programada.</div>`;
     } else inner=`<div class="rest-c"><div class="rest-ic">😴</div><div class="rest-lb">Descanso Total</div></div>`;
   } else {
-    const wr=getWeekRuns();const wk=S.currentWeek;
-    // Find which run slot this day corresponds to
+    const wk=S.currentWeek;
     const sched=S.daySchedule||DEFAULT_SCHEDULE;
-    const slot=sched[day.id];
-    // Run: slots A(run1),C(run3),F(run6) — map to original run day IDs
-    const runMap={A:1,C:3,F:6};
-    const runKey=runMap[slot];
-    if(day.run&&S.showRun&&wr[wk]&&wr[wk][runKey]){
-      const r=wr[wk][runKey];
-      if(r.dist.includes('PROVA')){
-        inner+=`<span class="tag tag-run">🏃 Corrida</span><div class="act" style="color:var(--ylw);font-weight:600;font-size:14px;">🎯 DIA DA PROVA</div>`;
+    if(day.run&&S.showRun){
+      const slot=sched[day.id];const slotDef=SLOTS[slot]||{};
+      const rType=slotDef.runType||'leve';
+      const ri=getRunInfo(rType,wk);
+      if(ri.prova){
+        inner+=`<span class="tag tag-run">🏃 Corrida</span><div class="act" style="color:var(--ylw);font-weight:600;font-size:14px;">🎯 DIA DA PROVA — ${S.targetDist||10} km</div>`;
+      } else if(ri.tiro){
+        inner+=`<span class="tag tag-run">⚡ Tiro</span><div class="act"><span class="dot ${ri.dot}"></span> <strong>${ri.reps}x</strong> (${ri.fast} min rápido + ${ri.easy} min leve) · Máxima intensidade</div>`;
       } else {
-        inner+=`<span class="tag tag-run">🏃 Corrida</span><div class="act"><span class="dot ${r.dot}"></span> ${r.dist} · ${r.int}</div>`;
+        inner+=`<span class="tag tag-run">🏃 Corrida</span><div class="act"><span class="dot ${ri.dot}"></span> ${ri.dist} · ${ri.int}</div>`;
       }
     }
     if(day.calc&&S.showRun){
@@ -820,11 +967,28 @@ function attachCardListeners(c){
 function toggleMG(h){h.closest('.mg').classList.toggle('open');}
 function toggleDone(dayId){
   const done=getWeekDone();const idx=done.indexOf(dayId);
-  if(idx>=0)done.splice(idx,1);
-  else{done.push(dayId);showToast('✅','Treino concluído!',`+${XP_PER_TRAINING} XP ao salvar`);}
-  setWeekDone(done);save();renderTodayView();renderWeekGrid();
+  const key=`${S.cycle}_${S.currentWeek}_${dayId}`;
+  if(idx>=0){
+    done.splice(idx,1);
+    if(S.awardedTrainings[key]){
+      S.xp=Math.max(0,(S.xp||0)-XP_PER_TRAINING);
+      S.totalTrainings=Math.max(0,(S.totalTrainings||0)-1);
+      delete S.awardedTrainings[key];
+      showToast('↩️','Treino desmarcado',`-${XP_PER_TRAINING} XP`);
+    }
+  } else {
+    done.push(dayId);
+    if(!S.awardedTrainings[key]){
+      S.xp=(S.xp||0)+XP_PER_TRAINING;
+      S.totalTrainings=(S.totalTrainings||0)+1;
+      S.awardedTrainings[key]=true;
+      checkAchievements();
+      showToast('✅','Treino concluído!',`+${XP_PER_TRAINING} XP`);
+    }
+  }
+  setWeekDone(done);save();
+  renderTodayView();renderWeekGrid();
   if(document.getElementById('view-progresso').classList.contains('active'))renderProgress();
-  // Check if cycle just completed
   if(isCycleComplete()) setTimeout(()=>triggerCheckup(),600);
 }
 
@@ -841,7 +1005,15 @@ function renderProgress(){
     return `<div class="dr-day${isDone?' done':''}"><div class="drn">${DAY_NAMES[i].slice(0,3)}</div><div class="dri">${isDone?'✅':d.rest?'😴':d.run?'🏃':'💪'}</div></div>`;
   }).join('');
 
-  let totalSets=0;dd.forEach(d=>{if(done.includes(d.id)&&d.gym)totalSets+=d.sets.reduce((a,b)=>a+b,0);});
+  let totalSets=0;dd.forEach(d=>{
+    if(done.includes(d.id)&&d.gym){
+      d.gym.forEach((m,i)=>{
+        const baseS=d.sets[i]||0;
+        const adj=S.volumes[m]?(S.volumes[m]/(VOL_R[m]?VOL_R[m].mav:1)):1;
+        totalSets+=Math.round(baseS*Math.max(.5,Math.min(1.8,adj)));
+      });
+    }
+  });
   const lvl=getLevel();const xpIn=S.xp-lvl.current.xp;const xpNeed=lvl.next?(lvl.next.xp-lvl.current.xp):1;
   const xpPct=lvl.next?Math.min(100,(xpIn/xpNeed)*100):100;
 
@@ -851,7 +1023,6 @@ function renderProgress(){
     return `<div class="hist-card"><div class="hist-wk">${h.cycle||'?'}</div><div class="hist-info"><div class="hist-label">Ciclo ${h.cycle||'?'} · ${d.getDate()} ${mo[d.getMonth()]} ${d.getFullYear()}</div><div class="hist-sub">${h.totalDone||0} treinos · ${h.pct||0}% adesão</div></div><div class="hist-xp">+${h.xpEarned} XP</div></div>`;
   }).join('');
 
-  const canSave=[1,2,3].some(w=>(S.weekCompleted[w]||[]).length>0);
   const cycleComplete=isCycleComplete();
 
   document.getElementById('prog-content').innerHTML=`
@@ -871,8 +1042,8 @@ function renderProgress(){
       <div class="stat-card"><div class="stat-v" style="color:var(--pur)">${S.cycle}</div><div class="stat-l">Ciclo atual</div></div>
     </div>
     <div class="moti"><div class="moti-ic">${moti.icon}</div><div><h4>${moti.title}</h4><p>${moti.msg}</p></div></div>
-    ${cycleComplete?`<button class="btn-action" onclick="triggerCheckup()" style="margin-bottom:16px;border-color:rgba(61,220,132,.4);color:var(--acc);">🎉 Ciclo completo — Fazer checkup e iniciar próximo ciclo</button>`
-    :canSave?`<button class="btn-action" onclick="manualSaveProgress()" style="margin-bottom:16px;border-color:rgba(245,200,66,.3);">💾 Salvar progresso e ganhar XP</button><div style="font-size:11px;color:var(--t3);text-align:center;margin-bottom:20px;">Complete as 3 semanas (mín. 3 treinos cada) para desbloquear o checkup do ciclo.</div>`:''}
+    ${cycleComplete?`<button class="btn-action" onclick="triggerCheckup()" style="margin-bottom:16px;border-color:rgba(61,220,132,.4);color:var(--acc);">🎉 Ciclo completo — Ver checkup e iniciar próximo ciclo</button>`
+    :`<div style="font-size:11px;color:var(--t3);text-align:center;margin-bottom:20px;padding:10px;background:var(--s1);border-radius:8px;border:1px solid var(--bdr);">Complete as 3 semanas (mín. 3 treinos cada) para desbloquear o checkup do ciclo.</div>`}
     <div class="sh"><h2>🏅 Conquistas</h2></div><div class="badge-grid">${achHTML}</div>
     ${S.history.length>0?`<div class="sh"><h2>📜 Histórico de Ciclos</h2></div>${histHTML}`:''}`;
 }
@@ -902,7 +1073,41 @@ function renderSettings(){
     return `<div class="sched-row"><span class="sched-day">${DAY_NAMES[d].slice(0,3)}</span><span class="sched-icon">${SLOTS[cur].icon.split('')[0]}</span><select class="sched-sel" onchange="changeSchedule(${d},this.value)">${opts}</select></div>`;
   }).join('');
 
+  const suggested=suggestTemplate();
+  const tplHTML=Object.entries(TEMPLATES).map(([k,t])=>`
+    <button onclick="applyTemplate('${k}')" style="flex:1;min-width:120px;padding:12px 8px;border-radius:10px;border:1px solid ${k===suggested?'rgba(61,220,132,.4)':'var(--bdr2)'};background:${k===suggested?'rgba(61,220,132,.06)':'var(--s2)'};color:var(--t1);cursor:pointer;text-align:center;transition:.2s;">
+      <div style="font-size:22px;margin-bottom:4px;">${t.icon}</div>
+      <div style="font-family:'Bebas Neue',cursive;font-size:16px;letter-spacing:.04em;">${t.name}</div>
+      <div style="font-size:10px;color:var(--t3);margin-top:2px;line-height:1.3;">${t.desc}</div>
+      ${k===suggested?`<div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--acc);margin-top:4px;letter-spacing:.08em;">SUGERIDO</div>`:''}
+    </button>`).join('');
+
+  if(!S.runPlan) S.runPlan=getRunPlanDefaults();
+  const rp=S.runPlan;
+  const runPlanHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="bmi-group"><label>🟢 Leve (km)</label><input class="bmi-inp" type="number" min="1" max="30" step=".5" value="${rp.leve}" oninput="updateRunPlan('leve',this.value)"></div>
+      <div class="bmi-group"><label>🟡 Moderado (km)</label><input class="bmi-inp" type="number" min="1" max="30" step=".5" value="${rp.moderado||rp.mod||3}" oninput="updateRunPlan('moderado',this.value)"></div>
+      <div class="bmi-group"><label>🟤 Longão (km)</label><input class="bmi-inp" type="number" min="1" max="50" step=".5" value="${rp.longao}" oninput="updateRunPlan('longao',this.value)"></div>
+      <div class="bmi-group"><label>🎯 Distância prova (km)</label><input class="bmi-inp" type="number" min="1" max="100" step=".5" value="${S.targetDist||10}" oninput="S.targetDist=parseFloat(this.value)||10;save();renderRunGuide();"></div>
+    </div>
+    <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div class="bmi-group"><label>🔴 Tiro — Séries</label><input class="bmi-inp" type="number" min="1" max="15" value="${rp.tiroReps}" oninput="updateRunPlan('tiroReps',this.value)"></div>
+      <div class="bmi-group"><label>Rápido (min)</label><input class="bmi-inp" type="number" min="1" max="10" value="${rp.tiroFast}" oninput="updateRunPlan('tiroFast',this.value)"></div>
+      <div class="bmi-group"><label>Leve (min)</label><input class="bmi-inp" type="number" min="1" max="10" value="${rp.tiroEasy}" oninput="updateRunPlan('tiroEasy',this.value)"></div>
+    </div>
+    <div class="sci-note" style="margin-top:10px;">Os valores aumentam automaticamente +0.5 km por ciclo.</div>`;
+
   document.getElementById('settings-content').innerHTML=`
+    <div class="set-sec"><h3>🗂️ Divisão de Treino</h3>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.5;">Escolha um template sugerido (você pode editar os dias individualmente logo abaixo).</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;">${tplHTML}</div>
+    </div>
+
+    <div class="set-sec"><h3>🏃 Distâncias de Corrida</h3>
+      ${runPlanHTML}
+    </div>
+
     <div class="set-sec"><h3>👤 Perfil & IMC</h3>
       <div class="bmi-grid"><div class="bmi-group"><label>Peso (kg)</label><input class="bmi-inp" type="number" id="s-w" value="${S.weight}" min="30" max="250" step=".1" oninput="updateBMI()"></div><div class="bmi-group"><label>Altura (cm)</label><input class="bmi-inp" type="number" id="s-h" value="${S.height}" min="100" max="230" oninput="updateBMI()"></div></div>
       <div class="bmi-result"><div class="bmi-num" id="bmi-n" style="color:${bmiColor}">${bmi}</div><div><div class="bmi-cat" id="bmi-c">${bmiCat}</div><div class="bmi-hint" id="bmi-h">${bmiHint}</div></div></div>
@@ -955,9 +1160,23 @@ function togModal(m){
   save();renderSettings();renderWeekGrid();renderTodayView();
 }
 
+function applyTemplate(key){
+  const tpl=TEMPLATES[key];if(!tpl)return;
+  if(!confirm(`Aplicar template "${tpl.name}"? Isso vai substituir sua divisão atual.`))return;
+  S.daySchedule={...tpl.sched};save();
+  renderWeekGrid();renderTodayView();renderRunGuide();renderSettings();
+  showToast(tpl.icon,`Template ${tpl.name} aplicado!`,tpl.desc);
+}
+
+function updateRunPlan(field,val){
+  if(!S.runPlan) S.runPlan=getRunPlanDefaults();
+  S.runPlan[field]=parseFloat(val)||1;
+  save();renderRunGuide();
+}
+
 function changeSchedule(day,slot){
   S.daySchedule[day]=slot;save();
-  renderWeekGrid();renderTodayView();renderSettings();
+  renderWeekGrid();renderTodayView();renderRunGuide();renderSettings();
   showToast('📅','Agenda atualizada',`${DAY_NAMES[day]} → ${SLOTS[slot].name}`);
 }
 
@@ -985,13 +1204,18 @@ function exportPDF(){
   const months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const d=new Date();const wm=WEEK_META[S.currentWeek];const dd=getDaysDef();
   const cMap={green:'cg',yellow:'cy',blue:'cb',red:'cr',purple:'cp',brown:'co',white:'cw'};
-  const wr=getWeekRuns();const runMap={A:1,C:3,F:6};
   const cardsHTML=dd.map(day=>{
     const c=cMap[day.color]||'cw';let inner='';
     if(day.rest){inner='<div class="pc-act">😴 Descanso</div>';}
     else{
-      const slot=(S.daySchedule||DEFAULT_SCHEDULE)[day.id];const rk=runMap[slot];
-      if(day.run&&wr[S.currentWeek]&&wr[S.currentWeek][rk]){const r=wr[S.currentWeek][rk];inner+=`<div class="pc-act">🏃 ${r.dist} · ${r.int||'Prova'}</div>`;}
+      const slot=(S.daySchedule||DEFAULT_SCHEDULE)[day.id];
+      const slotDef=SLOTS[slot]||{};
+      if(day.run&&slotDef.runType){
+        const ri=getRunInfo(slotDef.runType,S.currentWeek);
+        if(ri.prova) inner+=`<div class="pc-act">🎯 PROVA ${S.targetDist||10} km</div>`;
+        else if(ri.tiro) inner+=`<div class="pc-act">⚡ Tiro: ${ri.reps}x(${ri.fast}+${ri.easy}min)</div>`;
+        else inner+=`<div class="pc-act">🏃 ${ri.dist} · ${ri.int}</div>`;
+      }
       if(day.calc)inner+=`<div class="pc-act">📐 Meta: +10–20%</div>`;
       getExtraModsForDay(day.id).forEach(m=>{inner+=`<div class="pc-act">${EXTRA_MODS[m].icon} ${EXTRA_MODS[m].name}</div>`;});
       if(day.gym){day.gym.forEach((m,i)=>{inner+=`<div class="pc-act">💪 ${MN[m]}: ${day.sets[i]} séries</div>`;});
@@ -1030,6 +1254,9 @@ if(S.name&&S.v===APP_VERSION){
   document.getElementById('app').style.display='block';
   document.getElementById('ftimer').style.display='flex';
   buildApp();nav('hoje',document.querySelector('.bnav-btn'));
+} else {
+  // Pré-preenche o formulário com dados parciais salvos
+  preFillLanding();
 }
 </script>
 </body>
